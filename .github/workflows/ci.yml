@@ -113,7 +113,7 @@ jobs:
           node-version: 18
 
       - name: Cache node modules (npm cache)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('apps/browser-worker/package.json') }}
@@ -121,7 +121,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-browsers-${{ hashFiles('apps/browser-worker/package.json') }}
