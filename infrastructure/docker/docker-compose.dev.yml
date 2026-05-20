@@ -5,7 +5,7 @@ services:
       - "6379:6379"
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.76.0
+    image: otel/opentelemetry-collector-contrib:latest
     command: ["--config=/etc/otel/config.yaml"]
     volumes:
       - ./otel-config.yaml:/etc/otel/config.yaml:ro
