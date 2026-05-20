@@ -1,0 +1,2 @@
+{"timestamp":"2026-05-20T01:33:23.166Z","kind":"playwright_run","seed":844688350,"payload":{"url":"https://example.com","screenshot":"screenshot-1779240803054.png"},"metadata":{"worker":"browser-worker-playwright"}}
+{"timestamp":"2026-05-20T01:33:38.863Z","kind":"playwright_run","seed":645074982,"payload":{"url":"https://example.com","screenshot":"screenshot-1779240818822.png"},"metadata":{"worker":"browser-worker-playwright"}}

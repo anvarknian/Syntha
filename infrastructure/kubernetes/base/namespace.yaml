@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: syntha
+  labels:
+    app.kubernetes.io/name: syntha
+    app.kubernetes.io/part-of: synthetic-internet

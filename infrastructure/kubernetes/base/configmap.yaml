@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: syntha-config
+  labels:
+    app.kubernetes.io/name: syntha
+data:
+  REDPANDA_BROKERS: redpanda:9092
+  REDPANDA_TOPIC: syntha-events
+  SYNTHA_DATA_DIR: /data
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+  TEMPORAL_ADDRESS: temporal-frontend.temporal:7233
+  TEMPORAL_TASK_QUEUE: syntha-simulation
+  FAKE_GMAIL_URL: http://fake-gmail:3001
+  FAKE_SLACK_URL: http://fake-slack:3002
+  SYNTHA_API_URL: http://syntha-api:8080
+  REPLAY_ALLOWED_ORIGINS: http://fake-gmail:3001,http://fake-slack:3002,http://syntha-api:8080,about:blank,https://example.com
+  CLICKHOUSE_URL: http://clickhouse:8123

@@ -1,0 +1,192 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+        go-version: [1.26]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Go version
+        run: go version
+
+      - name: Run go vet (if present)
+        run: |
+          cd apps/api || exit 0
+          go vet ./...
+
+      - name: Run API unit tests
+        run: |
+          cd apps/api || exit 0
+          go test ./...
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Node version
+        run: node --version
+
+      - name: Install browser-worker deps
+        run: |
+          cd apps/browser-worker || exit 0
+          npm ci
+
+      - name: Install fake-gmail deps
+        run: |
+          cd apps/fake-gmail || exit 0
+          npm ci
+
+      - name: Test fake-slack
+        run: |
+          cd apps/fake-slack || exit 0
+          npm ci
+          npm test
+
+      - name: Build dashboard
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+        run: |
+          cd apps/dashboard || exit 0
+          npm ci
+          npm run typecheck
+          npm run build
+
+      - name: Build SDK
+        run: |
+          cd packages/sdk || exit 0
+          npm ci
+          npm run typecheck
+          npm run build
+
+      - name: Replay engine tests
+        run: |
+          node --test services/replay-engine/tests/*.test.js
+
+      - name: Analytics ingest smoke test
+        run: |
+          node -c services/analytics/clickhouse_ingest.js
+          node services/analytics/clickhouse_ingest.js data/replays/test-replay.jsonl --dry-run
+
+      - name: Kubernetes manifest render
+        run: |
+          kubectl kustomize infrastructure/kubernetes/base >/tmp/syntha-k8s.yaml
+
+      - name: Docker compose render
+        run: |
+          docker compose -f infrastructure/docker/docker-compose.dev.yml config >/tmp/syntha-compose.yaml
+
+      - name: Lint / smoke
+        run: |
+          echo "No lint rules defined yet. Add project-specific checks later."
+
+      - name: Run orchestrator tests
+        run: |
+          cd services/orchestrator
+          go test ./...
+
+  playwright-test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Cache node modules (npm cache)
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('apps/browser-worker/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-browsers-${{ hashFiles('apps/browser-worker/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-browsers-
+
+      - name: Install dependencies
+        run: |
+          cd apps/browser-worker
+          npm ci
+
+      - name: Install Playwright browsers (cached)
+        run: |
+          cd apps/browser-worker
+          npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: |
+          cd apps/browser-worker
+          npm test
+
+  api-integration:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.26
+
+      - name: Run API integration tests
+        run: |
+          cd apps/api
+          go test -v ./... -run Test.*Integration
+
+  e2e-dev-stack:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Start dev stack
+        run: |
+          docker compose -f infrastructure/docker/docker-compose.dev.yml up -d --build
+
+      - name: Wait for services
+        run: |
+          # wait for collector
+          for i in {1..30}; do
+            if curl -sS http://localhost:9464/metrics >/dev/null 2>&1; then echo ok; break; fi
+            sleep 1
+          done
+
+      - name: Run end-to-end checks
+        run: |
+          cd apps/api
+          # run API integration tests
+          go test -v ./... -run Test.*Integration
+
+      - name: Tear down dev stack
+        if: always()
+        run: |
+          docker compose -f infrastructure/docker/docker-compose.dev.yml down -v

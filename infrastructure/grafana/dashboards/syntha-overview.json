@@ -1,0 +1,61 @@
+{
+  "title": "Syntha Overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "tags": ["syntha", "replay", "agents"],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Replay Events",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "targets": [
+        {
+          "format": 1,
+          "rawSql": "SELECT count() AS value FROM syntha.events WHERE timestamp >= $__fromTime AND timestamp <= $__toTime"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Replay Failures",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "targets": [
+        {
+          "format": 1,
+          "rawSql": "SELECT sum(failed) AS value FROM syntha.replay_runs WHERE started_at >= $__fromTime AND started_at <= $__toTime"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Events By Kind",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "targets": [
+        {
+          "format": 1,
+          "rawSql": "SELECT toStartOfMinute(timestamp) AS time, kind, count() AS value FROM syntha.events WHERE timestamp >= $__fromTime AND timestamp <= $__toTime GROUP BY time, kind ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Recent Replay Events",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "targets": [
+        {
+          "format": 1,
+          "rawSql": "SELECT timestamp, run_id, sequence, kind, event_id, checksum FROM syntha.events ORDER BY timestamp DESC LIMIT 100"
+        }
+      ]
+    }
+  ]
+}

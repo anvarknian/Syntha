@@ -1,0 +1,15 @@
+.git
+.github
+**/.terraform
+**/.next
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+coverage
+output
+.playwright-cli
+data/events/*.jsonl
+data/replays/*.jsonl
+*.log
+*.tfstate
+*.tfstate.*

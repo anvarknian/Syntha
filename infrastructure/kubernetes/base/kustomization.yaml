@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: syntha
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - api.yaml
+  - browser-worker.yaml
+  - fake-gmail.yaml
+  - fake-slack.yaml
+  - dashboard.yaml
+  - orchestrator.yaml
+  - redis.yaml
+  - redpanda.yaml
+  - clickhouse.yaml
+  - otel-collector.yaml
+  - autoscaling.yaml
+
+images:
+  - name: syntha/api
+    newTag: latest
+  - name: syntha/browser-worker
+    newTag: latest
+  - name: syntha/fake-gmail
+    newTag: latest
+  - name: syntha/fake-slack
+    newTag: latest
+  - name: syntha/dashboard
+    newTag: latest
+  - name: syntha/orchestrator
+    newTag: latest

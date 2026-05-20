@@ -1,0 +1,107 @@
+services:
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.76.0
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ./otel-config.yaml:/etc/otel/config.yaml:ro
+    ports:
+      - "4318:4318"
+      - "9464:9464"
+
+  browser-worker:
+    image: node:18
+    working_dir: /app
+    volumes:
+      - ../../apps/browser-worker:/app
+      - ../../services:/services
+      - ../../data:/data
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
+    depends_on:
+      - otel-collector
+    command: ["sh","-c","npm ci --no-audit --no-fund && npm run start"]
+
+  fake-gmail:
+    image: node:18
+    working_dir: /app
+    volumes:
+      - ../../apps/fake-gmail:/app
+      - ../../services:/services
+      - ../../data:/data
+    ports:
+      - "3001:3001"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
+      - EXPORT_DENY_FIELDS=body
+    depends_on:
+      - otel-collector
+    command: ["sh","-c","npm ci --no-audit --no-fund && npm start"]
+
+  fake-slack:
+    image: node:18
+    working_dir: /app
+    volumes:
+      - ../../apps/fake-slack:/app
+      - ../../services:/services
+      - ../../data:/data
+    ports:
+      - "3002:3002"
+    environment:
+      - SYNTHA_DATA_DIR=/data
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
+      - EXPORT_DENY_FIELDS=text
+      - FAKE_SLACK_RATE_LIMIT_PER_MINUTE=240
+    depends_on:
+      - otel-collector
+    command: ["sh","-c","npm ci --no-audit --no-fund && npm start"]
+
+  dashboard:
+    image: node:18
+    working_dir: /app
+    volumes:
+      - ../../apps/dashboard:/app
+      - ../../data:/data:ro
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_TELEMETRY_DISABLED=1
+      - SYNTHA_API_URL=http://api:8080
+      - SYNTHA_DATA_DIR=/data
+    depends_on:
+      - api
+    command: ["sh","-c","npm ci --no-audit --no-fund && npm run dev -- --hostname 0.0.0.0"]
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.12
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - ../clickhouse/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+
+  redpanda:
+    image: vectorized/redpanda:latest
+    command: ["redpanda", "start", "--overprovisioned", "--memory", "1G", "--smp", "1", "--reserve-memory", "0M"]
+    ports:
+      - "9092:9092"
+
+  api:
+    image: golang:1.26
+    working_dir: /app
+    volumes:
+      - ../../apps/api:/app
+      - ../../data:/data
+    ports:
+      - "8080:8080"
+    environment:
+      - REDPANDA_BROKERS=redpanda:9092
+      - SYNTHA_DATA_DIR=/data
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
+      - FAKE_GMAIL_URL=http://fake-gmail:3001
+      - FAKE_SLACK_URL=http://fake-slack:3002
+    command: ["sh","-c","go run ."]

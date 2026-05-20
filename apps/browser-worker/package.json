@@ -1,0 +1,17 @@
+{
+  "name": "browser-worker",
+  "version": "0.0.1",
+  "main": "run_playwright.js",
+  "scripts": {
+    "start": "node run_playwright.js",
+    "run-playwright": "node run_playwright.js",
+    "test": "node tests/run_test.js",
+    "install-browsers": "npx playwright install --with-deps"
+  },
+  "dependencies": {
+    "playwright": "^1.60.0",
+    "@opentelemetry/sdk-node": "^0.218.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.218.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.76.0"
+  }
+}
