@@ -1,0 +1,65 @@
+version: 2
+updates:
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Go Modules
+  - package-ecosystem: "gomod"
+    directory: "/apps/api"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "gomod"
+    directory: "/services/orchestrator"
+    schedule:
+      interval: "weekly"
+
+  # NPM Packages
+  - package-ecosystem: "npm"
+    directory: "/apps/browser-worker"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/apps/dashboard"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/apps/fake-gmail"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/apps/fake-slack"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/packages/sdk"
+    schedule:
+      interval: "weekly"
+
+  # Docker
+  - package-ecosystem: "docker"
+    directory: "/apps/api"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/apps/browser-worker"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/apps/dashboard"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/apps/fake-gmail"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/apps/fake-slack"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/services/orchestrator"
+    schedule:
+      interval: "weekly"
