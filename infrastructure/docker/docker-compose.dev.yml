@@ -85,7 +85,7 @@ services:
       - ../clickhouse/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
 
   redpanda:
-    image: vectorized/redpanda:latest
+    image: redpandadata/redpanda:latest
     command: ["redpanda", "start", "--overprovisioned", "--memory", "1G", "--smp", "1", "--reserve-memory", "0M"]
     ports:
       - "9092:9092"

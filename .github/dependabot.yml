@@ -1,65 +1,245 @@
 version: 2
+
+# registries:
+#   npm-npmjs:
+#     type: npm-registry
+#     url: https://registry.npmjs.org
+#     token: ${{secrets.NPM_NPMJS_TOKEN}}
+#     replaces-base: true
+
 updates:
   # GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
+      interval: daily
+    cooldown:
+      default-days: 2
+    groups:
+      actions:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+    open-pull-requests-limit: 1
 
-  # Go Modules
-  - package-ecosystem: "gomod"
-    directory: "/apps/api"
+  # Go Modules - API
+  - package-ecosystem: gomod
+    directory: /apps/api
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "gomod"
-    directory: "/services/orchestrator"
-    schedule:
-      interval: "weekly"
+      interval: daily
+    cooldown:
+      default-days: 2
+    groups:
+      go-deps:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+    open-pull-requests-limit: 1
 
-  # NPM Packages
-  - package-ecosystem: "npm"
-    directory: "/apps/browser-worker"
+  # Go Modules - Orchestrator
+  - package-ecosystem: gomod
+    directory: /services/orchestrator
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "npm"
-    directory: "/apps/dashboard"
-    schedule:
-      interval: "weekly"
-  - package-ecosystem: "npm"
-    directory: "/apps/fake-gmail"
-    schedule:
-      interval: "weekly"
-  - package-ecosystem: "npm"
-    directory: "/apps/fake-slack"
-    schedule:
-      interval: "weekly"
-  - package-ecosystem: "npm"
-    directory: "/packages/sdk"
-    schedule:
-      interval: "weekly"
+      interval: daily
+    cooldown:
+      default-days: 2
+    groups:
+      go-deps:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+    open-pull-requests-limit: 1
 
-  # Docker
-  - package-ecosystem: "docker"
-    directory: "/apps/api"
+  # NPM Packages - Browser Worker
+  - package-ecosystem: npm
+    directory: /apps/browser-worker
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "docker"
-    directory: "/apps/browser-worker"
+      interval: daily
+    cooldown:
+      default-days: 2
+    groups:
+      production:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      development:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+    open-pull-requests-limit: 1
+    registries:
+      - npm-npmjs
+
+  # NPM Packages - Dashboard
+  - package-ecosystem: npm
+    directory: /apps/dashboard
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "docker"
-    directory: "/apps/dashboard"
+      interval: daily
+    cooldown:
+      default-days: 2
+    groups:
+      production:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      development:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+    open-pull-requests-limit: 1
+    registries:
+      - npm-npmjs
+
+  # NPM Packages - Fake Gmail
+  - package-ecosystem: npm
+    directory: /apps/fake-gmail
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "docker"
-    directory: "/apps/fake-gmail"
+      interval: daily
+    cooldown:
+      default-days: 2
+    groups:
+      production:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      development:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+    open-pull-requests-limit: 1
+    registries:
+      - npm-npmjs
+
+  # NPM Packages - Fake Slack
+  - package-ecosystem: npm
+    directory: /apps/fake-slack
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "docker"
-    directory: "/apps/fake-slack"
+      interval: daily
+    cooldown:
+      default-days: 2
+    groups:
+      production:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      development:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+    open-pull-requests-limit: 1
+    registries:
+      - npm-npmjs
+
+  # NPM Packages - SDK
+  - package-ecosystem: npm
+    directory: /packages/sdk
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "docker"
-    directory: "/services/orchestrator"
+      interval: daily
+    cooldown:
+      default-days: 2
+    groups:
+      production:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      development:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+    open-pull-requests-limit: 1
+    registries:
+      - npm-npmjs
+
+  # Docker - API
+  - package-ecosystem: docker
+    directory: /apps/api
     schedule:
-      interval: "weekly"
+      interval: weekly
+    cooldown:
+      default-days: 2
+    groups:
+      docker-images:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
+
+  # Docker - Browser Worker
+  - package-ecosystem: docker
+    directory: /apps/browser-worker
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 2
+    groups:
+      docker-images:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
+
+  # Docker - Dashboard
+  - package-ecosystem: docker
+    directory: /apps/dashboard
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 2
+    groups:
+      docker-images:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
+
+  # Docker - Fake Gmail
+  - package-ecosystem: docker
+    directory: /apps/fake-gmail
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 2
+    groups:
+      docker-images:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
+
+  # Docker - Fake Slack
+  - package-ecosystem: docker
+    directory: /apps/fake-slack
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 2
+    groups:
+      docker-images:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
+
+  # Docker - Orchestrator
+  - package-ecosystem: docker
+    directory: /services/orchestrator
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 2
+    groups:
+      docker-images:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
