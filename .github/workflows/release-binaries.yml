@@ -1,0 +1,47 @@
+name: Release Go Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.26'
+
+      - name: Build API Binaries
+        run: |
+          cd apps/api
+          GOOS=linux GOARCH=amd64 go build -o ../../syntha-api-linux-amd64 .
+          GOOS=linux GOARCH=arm64 go build -o ../../syntha-api-linux-arm64 .
+          GOOS=darwin GOARCH=amd64 go build -o ../../syntha-api-darwin-amd64 .
+          GOOS=darwin GOARCH=arm64 go build -o ../../syntha-api-darwin-arm64 .
+
+      - name: Build Orchestrator Binaries
+        run: |
+          cd services/orchestrator
+          GOOS=linux GOARCH=amd64 go build -o ../../syntha-orchestrator-linux-amd64 .
+          GOOS=linux GOARCH=arm64 go build -o ../../syntha-orchestrator-linux-arm64 .
+          GOOS=darwin GOARCH=amd64 go build -o ../../syntha-orchestrator-darwin-amd64 .
+          GOOS=darwin GOARCH=arm64 go build -o ../../syntha-orchestrator-darwin-arm64 .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            syntha-api-*
+            syntha-orchestrator-*
+          generate_release_notes: true
