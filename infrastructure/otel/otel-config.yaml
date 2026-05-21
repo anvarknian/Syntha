@@ -1,7 +1,8 @@
 receivers:
   otlp:
     protocols:
-      http: {}
+      http:
+        endpoint: "0.0.0.0:4318"
 
 processors: {}
 

@@ -10,8 +10,11 @@ resources:
   - browser-worker.yaml
   - fake-gmail.yaml
   - fake-slack.yaml
+  - fake-jira.yaml
+  - fake-salesforce.yaml
   - dashboard.yaml
   - orchestrator.yaml
+  - network-policies.yaml
   - redis.yaml
   - redpanda.yaml
   - clickhouse.yaml
@@ -26,6 +29,10 @@ images:
   - name: syntha/fake-gmail
     newTag: latest
   - name: syntha/fake-slack
+    newTag: latest
+  - name: syntha/fake-jira
+    newTag: latest
+  - name: syntha/fake-salesforce
     newTag: latest
   - name: syntha/dashboard
     newTag: latest

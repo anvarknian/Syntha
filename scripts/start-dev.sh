@@ -9,4 +9,6 @@ echo "OpenTelemetry Collector Prometheus endpoint: http://localhost:9464/metrics
 echo "API Prometheus metrics: http://localhost:9090/metrics"
 echo "Fake Gmail health endpoint: http://localhost:3001/healthz"
 echo "Fake Slack health endpoint: http://localhost:3002/healthz"
+echo "Fake Jira health endpoint: http://localhost:3003/healthz"
+echo "Fake Salesforce health endpoint: http://localhost:3004/healthz"
 echo "To verify traces/metrics, curl the collector and API endpoints after starting services."

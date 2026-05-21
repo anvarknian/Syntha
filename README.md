@@ -150,6 +150,8 @@ Verify observability endpoints:
 - Dashboard: `http://localhost:3000`
 - Fake Gmail health endpoint: `http://localhost:3001/healthz`
 - Fake Slack health endpoint: `http://localhost:3002/healthz`
+- Fake Jira health endpoint: `http://localhost:3003/healthz`
+- Fake Salesforce health endpoint: `http://localhost:3004/healthz`
 - ClickHouse HTTP endpoint: `http://localhost:8123`
 
 Example verification commands:
@@ -197,12 +199,35 @@ npm ci
 npm start
 ```
 
+Run fake Jira locally:
+
+```bash
+cd apps/fake-jira
+npm ci
+npm start
+```
+
+Run fake Salesforce locally:
+
+```bash
+cd apps/fake-salesforce
+npm ci
+npm start
+```
+
 Build the typed SDK for external agent instrumentation:
 
 ```bash
 cd packages/sdk
 npm ci
 npm run build
+```
+
+Build the Syntha CLI:
+
+```bash
+cd apps/cli
+go build -o ../../bin/syntha .
 ```
 
 Render the Kubernetes base:
@@ -334,12 +359,19 @@ Compatible with any model or agent framework.
 
 ## Browser Simulation
 
-* Persistent browser sessions
-* Stateful workflows
-* CAPTCHA handling
-* Multi-tab execution
-* DOM snapshots
-* Screenshot tracing
+Current (implemented):
+
+* Playwright execution with persistent session state
+* Multi-tab runs via configurable URL sets
+* Deterministic seed capture per run target
+* Screenshot artifact recording per tab
+* DOM snapshot capture per tab
+* CAPTCHA signal detection (reCAPTCHA/hCaptcha indicators)
+* Replay event emission (`playwright_run`)
+
+Planned (not yet implemented):
+
+* Robust CAPTCHA solving strategies
 
 Built with:
 
@@ -350,24 +382,25 @@ Built with:
 
 ## Fake SaaS Ecosystem
 
-Simulated:
+Current (implemented):
 
 * Gmail
 * Slack
-* Salesforce
 * Jira
-* Notion
-* Zendesk
-* Stripe
-* internal dashboards
-
-Each environment includes:
+* Salesforce
 
 * realistic APIs
 * latency
 * permissions
 * failures
 * evolving state
+
+Planned:
+
+* Notion
+* Zendesk
+* Stripe
+* internal dashboards
 
 ---
 
@@ -390,16 +423,18 @@ scenario:
 
 ## Observability
 
-Every execution records:
+Current telemetry includes:
 
-* prompts
-* reasoning traces
-* tool calls
+* replay events
 * screenshots
-* token usage
-* browser actions
-* latency
-* failures
+* publish retries and event counters
+* OpenTelemetry traces and OTLP metrics
+
+Planned:
+
+* prompt/tool-call level capture across all runtimes
+* token-usage reporting
+* richer browser action traces
 
 Powered by:
 
@@ -411,7 +446,12 @@ Powered by:
 
 ## Massive Parallel Simulation
 
-Run:
+Current state:
+
+* local and Kubernetes deployment scaffolding
+* horizontal pod autoscaling policies for key services
+
+Long-term target:
 
 * thousands of agents
 * across millions of synthetic interactions
@@ -420,14 +460,21 @@ Run:
 Powered by:
 
 * Kubernetes
-* Firecracker microVMs
 * Temporal workflows
+
+Planned isolation hardening:
+
+* Firecracker microVMs / equivalent sandboxed execution
 
 ---
 
 # Supported Frameworks
 
-Synthetic Internet is framework-agnostic and supports:
+Current:
+
+* custom agent runtimes via REST + SDK + replay schema
+
+Planned integrations:
 
 * LangGraph
 * CrewAI
@@ -546,7 +593,7 @@ Test:
 ## Create a Synthetic World
 
 ```bash
-synthetic world create acme-corp
+./bin/syntha world create acme-corp
 ```
 
 ---
@@ -554,7 +601,7 @@ synthetic world create acme-corp
 ## Launch Browser Cluster
 
 ```bash
-synthetic browsers start
+./bin/syntha browsers start
 ```
 
 ---
@@ -562,7 +609,7 @@ synthetic browsers start
 ## Run Agent Evaluation
 
 ```bash
-synthetic eval run support-agent.yaml
+./bin/syntha eval run data/scenarios/support-agent.yaml
 ```
 
 ---
@@ -684,19 +731,3 @@ Like:
 # License
 
 Custom Non-Commercial License (See [LICENSE](LICENSE))
-
----
-
-# Future
-
-The future internet will contain billions of AI agents.
-
-Those agents will need:
-
-* testing
-* governance
-* simulation
-* benchmarking
-* safety validation
-
-Synthetic Internet is the infrastructure layer for that future.

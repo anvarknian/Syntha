@@ -11,6 +11,7 @@ export type ReplayEvent = {
   metadata: Record<string, unknown>;
   sequence?: number;
   checksum?: string;
+  isValid?: boolean;
 };
 
 export type ReplaySummary = {
@@ -22,6 +23,14 @@ export type ReplaySummary = {
   invalidChecksums: number;
   firstTimestamp: string | null;
   lastTimestamp: string | null;
+};
+
+export type ReplayArtifactKind = "screenshot" | "dom";
+
+export type ReplayArtifact = {
+  path: string;
+  fileName: string;
+  contentType: string;
 };
 
 const dataDir = process.env.SYNTHA_DATA_DIR || resolveDataDir();
@@ -68,15 +77,57 @@ function parseJSONL(filePath: string): ReplayEvent[] {
   if (!existsSync(filePath)) return [];
   return readFileSync(filePath, "utf8")
     .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .flatMap((line) => {
+    .flatMap((line, index) => {
+      const trimmed = line.trim();
+      if (!trimmed) return [];
+
       try {
-        return [JSON.parse(line) as ReplayEvent];
+        const event = JSON.parse(trimmed) as Partial<ReplayEvent>;
+        const lineNumber = index + 1;
+        return [{
+          ...event,
+          id: event.id || `${path.basename(filePath)}:${lineNumber}`,
+          sequence: event.sequence ?? lineNumber,
+          timestamp: event.timestamp ?? new Date(0).toISOString(),
+          kind: event.kind ?? "unknown_event",
+          seed: event.seed ?? 0,
+          payload: event.payload ?? {},
+          metadata: event.metadata ?? {},
+        } satisfies ReplayEvent];
       } catch {
         return [];
       }
     });
+}
+
+function contentTypeForArtifact(kind: ReplayArtifactKind, fileName: string): string | null {
+  if (kind === "screenshot") {
+    if (fileName.endsWith(".png")) return "image/png";
+    if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) return "image/jpeg";
+    if (fileName.endsWith(".webp")) return "image/webp";
+    return null;
+  }
+
+  return fileName.endsWith(".html") ? "text/plain; charset=utf-8" : null;
+}
+
+export function resolveReplayArtifact(kind: ReplayArtifactKind, fileName: string): ReplayArtifact | null {
+  const safeName = path.basename(fileName);
+  if (safeName !== fileName) return null;
+
+  const contentType = contentTypeForArtifact(kind, safeName);
+  if (!contentType) return null;
+
+  const artifactDir = path.join(dataDir, kind === "screenshot" ? "artifacts" : "dom-snapshots");
+  const artifactPath = path.resolve(artifactDir, safeName);
+  const artifactRoot = `${path.resolve(artifactDir)}${path.sep}`;
+  if (!artifactPath.startsWith(artifactRoot) || !existsSync(artifactPath)) return null;
+
+  return {
+    path: artifactPath,
+    fileName: safeName,
+    contentType,
+  };
 }
 
 export function listReplayFiles(): string[] {
@@ -99,10 +150,16 @@ export function readReplaySummary(fileName?: string): ReplaySummary {
     kindCounts.set(event.kind, (kindCounts.get(event.kind) ?? 0) + 1);
     if (!event.checksum) {
       invalidChecksums += 1;
+      event.isValid = false;
       continue;
     }
-    if (checksumFor(event) === event.checksum) validChecksums += 1;
-    else invalidChecksums += 1;
+    if (checksumFor(event) === event.checksum) {
+      validChecksums += 1;
+      event.isValid = true;
+    } else {
+      invalidChecksums += 1;
+      event.isValid = false;
+    }
   }
 
   return {

@@ -13,6 +13,8 @@ data:
   TEMPORAL_TASK_QUEUE: syntha-simulation
   FAKE_GMAIL_URL: http://fake-gmail:3001
   FAKE_SLACK_URL: http://fake-slack:3002
+  FAKE_JIRA_URL: http://fake-jira:3003
+  FAKE_SALESFORCE_URL: http://fake-salesforce:3004
   SYNTHA_API_URL: http://syntha-api:8080
-  REPLAY_ALLOWED_ORIGINS: http://fake-gmail:3001,http://fake-slack:3002,http://syntha-api:8080,about:blank,https://example.com
+  REPLAY_ALLOWED_ORIGINS: http://fake-gmail:3001,http://fake-slack:3002,http://fake-jira:3003,http://fake-salesforce:3004,http://syntha-api:8080,about:blank,https://example.com
   CLICKHOUSE_URL: http://clickhouse:8123

@@ -27,7 +27,11 @@ func main() {
 	w := worker.New(c, taskQueue, worker.Options{})
 	w.RegisterWorkflow(SimulationWorkflow)
 	w.RegisterActivity(ValidateScenarioActivity)
+	w.RegisterActivity(BuildExecutionPlanActivity)
+	w.RegisterActivity(RunPreflightChecksActivity)
 	w.RegisterActivity(RunReplayValidationActivity)
+	w.RegisterActivity(AnalyzeReplayCoverageActivity)
+	w.RegisterActivity(EvaluateRunRiskActivity)
 
 	log.Printf("syntha-orchestrator listening on task queue %q via %s", taskQueue, hostPort)
 	if err := w.Run(worker.InterruptCh()); err != nil {
