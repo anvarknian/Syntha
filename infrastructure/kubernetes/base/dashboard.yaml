@@ -16,6 +16,13 @@ spec:
         app.kubernetes.io/name: syntha-dashboard
         app.kubernetes.io/component: dashboard
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: dashboard
           image: syntha/dashboard:latest
@@ -28,6 +35,17 @@ spec:
               value: "3000"
             - name: NEXT_TELEMETRY_DISABLED
               value: "1"
+            - name: HOME
+              value: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           ports:
             - name: http
               containerPort: 3000
@@ -50,6 +68,9 @@ spec:
             limits:
               cpu: "1"
               memory: 1Gi
+      volumes:
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

@@ -27,6 +27,10 @@ jobs:
             image: fake-gmail
           - context: ./apps/fake-slack
             image: fake-slack
+          - context: ./apps/fake-jira
+            image: fake-jira
+          - context: ./apps/fake-salesforce
+            image: fake-salesforce
 
     permissions:
       contents: read

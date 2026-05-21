@@ -143,6 +143,8 @@ vite.config.ts.timestamp-*
 .vite/
 .cache
 data/artifacts/*
+data/dom-snapshots/*
+data/browser-sessions/*
 output/
 .playwright-cli/
 

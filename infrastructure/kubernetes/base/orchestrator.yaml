@@ -16,6 +16,13 @@ spec:
         app.kubernetes.io/name: syntha-orchestrator
         app.kubernetes.io/component: orchestrator
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: orchestrator
           image: syntha/orchestrator:latest
@@ -23,6 +30,15 @@ spec:
           envFrom:
             - configMapRef:
                 name: syntha-config
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           resources:
             requests:
               cpu: 100m
@@ -30,3 +46,6 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+      volumes:
+        - name: tmp
+          emptyDir: {}

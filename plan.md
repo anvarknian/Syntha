@@ -70,6 +70,7 @@ Phase 4 — Ecosystem & UX (ongoing)
 ```
 /apps
   /api                 # simulation engine, REST endpoints
+  /cli                 # syntha CLI
   /browser-worker      # Playwright worker
   /dashboard           # Next.js dashboard
 
@@ -113,11 +114,11 @@ Created by automation on repository scan. To iterate: edit this file and assign 
 
 Phase completion bars use a 10-step scale.
 
-- Phase 0 — Project Hygiene: [##########] 100% — bootstrap, CI, README, dev compose implemented.
-- Phase 1 — Core Simulation Primitives: [##########] 100% — `apps/api`, `eventbus` adapters, `browser-worker`, `fake-gmail`, and replay recorder implemented.
-- Phase 2 — Replay, Instrumentation & Security: [##########] 100% — deterministic replay schema/integrity checks, strict rehydration runner validation, cross-service OTEL wiring (API + browser-worker + fake-gmail), and export-control scrub policies implemented.
-- Phase 3 — Scale & Orchestration: [##########] 100% — Kubernetes/Kustomize base, Terraform apply wrapper, Temporal orchestration worker, browser autoscaling policy, ClickHouse schema/ingest path, and starter Grafana dashboard implemented.
-- Phase 4 — Ecosystem & UX: [##########] 100% — replay dashboard, scenario launcher, typed SDK package, fake Slack SaaS simulator, and dev/Kubernetes wiring implemented for the Phase 4 slice.
+- Phase 0 — Project Hygiene: [##########] 100% — bootstrap, CI, README, and dev compose are in place.
+- Phase 1 — Core Simulation Primitives: [#########-] 90% — `apps/api`, eventbus adapters, browser worker prototype, fake Gmail/Slack, and replay recorder are implemented; multi-tab/CAPTCHA/DOM snapshot depth remains.
+- Phase 2 — Replay, Instrumentation & Security: [########--] 80% — replay schema/integrity checks and egress allowlist are implemented; broader deterministic re-execution coverage and stronger runtime isolation are still open.
+- Phase 3 — Scale & Orchestration: [########--] 85% — Kubernetes base, Terraform apply wrapper, Temporal worker scaffolding, staged workflow orchestration, autoscaling policy, and ClickHouse ingest path are implemented.
+- Phase 4 — Ecosystem & UX: [########--] 80% — replay dashboard, scenario launcher, typed SDK package, fake Slack simulator, and an initial `syntha` CLI are implemented.
 
 Key completed items (representative):
 
@@ -128,13 +129,73 @@ Key completed items (representative):
 - Replay tools: `services/replay-engine/replayer.js` (packer) and `runner.js` (replayer)
 - Observability: OpenTelemetry tracing and OTLP metric exporter wiring; Prometheus metrics and `/metrics` integration tests
 - Security: prompt-injection detector and metric recording
+- CLI: `apps/cli` now supports `world create`, `browsers start`, and `eval run`
 
-Remaining high-priority work:
+## Next Phases (Grouped by Theme)
 
-- Harden runtime isolation beyond process-level egress controls (microVM/container policy layer)
-- Extend the fake SaaS catalog beyond Gmail and Slack (Jira, Salesforce, Stripe, Notion)
+Phase 5 — Browser Intelligence & Realism
+- Implement robust CAPTCHA solving strategies (beyond signal detection).
+- Expand browser action tracing fidelity for replay/debugging (navigation, form actions, network captures).
 
-If you want, I can (pick one):
+Phase 6 — Fake SaaS Expansion
+- Add new simulators: Notion, Zendesk, Stripe, internal dashboards.
+- Expand enterprise catalog with SAP, ServiceNow, and Workday simulators.
+- Preserve deterministic replay event contracts and test fixtures for each new service.
 
-- Open `plan.md` in the repo with links to implemented files and create a follow-up `ROADMAP.md` with timelines, or
-- Break Phase 2 remaining tasks into a more granular TODO and start implementing the deterministic replayer validations now.
+Phase 7 — Deep Observability & Evaluation Signals
+- Capture prompt/tool-call level traces across all runtimes.
+- Add token-usage and model-cost telemetry pipelines.
+- Enrich replay analytics and dashboard visualizations for failure attribution.
+
+Phase 8 — Runtime Isolation Platform
+- Add Firecracker microVM (or equivalent hardened sandbox) execution path.
+- Define workload policy profiles (network, filesystem, resource, credential scopes) per agent class.
+- Integrate isolation controls with orchestrator scheduling and replay reproducibility guarantees.
+
+Phase 9 — Scale & World Simulation
+- Build multi-agent world orchestration primitives.
+- Add adversarial user generation and synthetic enterprise dataset evolution workflows.
+- Validate high-concurrency execution targets (thousands of agents, millions of interactions).
+
+Phase 10 — Integrations & Ecosystem Connectivity
+- Add first-class framework adapters: LangGraph, CrewAI, AutoGen, OpenAI Agents SDK, LangChain, Semantic Kernel.
+- Add cloud/system integration surfaces: AWS, GCP, Azure, SIEM/audit/policy-engine connectors.
+- Ship stable SDK/API integration contracts with replay-safe instrumentation defaults.
+
+Phase 11 — Benchmark Ecosystem & Standards
+- Launch benchmark marketplace and reusable scenario packs.
+- Publish public evaluation leaderboards.
+- Define compliance/certification-style evaluation tracks.
+- Standardize an industry-grade benchmark suite for autonomous agent behavior.
+
+## Phase 12+ Opportunity Map (Impact/Effort Ranked)
+
+Legend:
+- Impact: `H` high, `M` medium
+- Effort: `L` low, `M` medium, `H` high
+
+Priority Tier A (high-impact, near-term):
+- Counterfactual replay engine (`H` impact / `M` effort)
+  - Re-run the same trace with different model/tool policies and generate deterministic diffs.
+- Agent flight recorder (`H` impact / `M` effort)
+  - Capture decision boundaries, tool arguments, memory mutations, and policy checkpoints per run.
+- Safety gate simulation (`H` impact / `M` effort)
+  - Inline policy-gate testing before tool execution; score preventions, misses, and false positives.
+- Cost/latency optimizer (`H` impact / `M` effort)
+  - Auto-tune model routing/prompt/tool strategies against reliability, latency, and budget constraints.
+
+Priority Tier B (platform differentiation):
+- Scenario DSL + compiler (`H` impact / `H` effort)
+  - Introduce typed scenario definitions that compile to deterministic world/event/failure plans.
+- Synthetic human behavior models (`H` impact / `H` effort)
+  - Persona-driven users that evolve over time (urgency, frustration, deception, compliance drift).
+- Governance/compliance layer (`H` impact / `M` effort)
+  - Map control requirements to measurable simulation checks and attestable outputs.
+
+Priority Tier C (ecosystem expansion):
+- Adversary marketplace (`M` impact / `M` effort)
+  - Shareable/red-team scenario packs for prompt injection, phishing, and privilege escalation families.
+- Benchmark-as-a-service (`H` impact / `H` effort)
+  - Hosted runs with signed reproducibility artifacts and public/private leaderboard submissions.
+- Digital twin mode (`H` impact / `H` effort)
+  - Mirror enterprise workflows safely via anonymized schemas and replay-safe surrogate data.

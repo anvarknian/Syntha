@@ -59,6 +59,18 @@ jobs:
           npm ci
           npm test
 
+      - name: Test fake-jira
+        run: |
+          cd apps/fake-jira || exit 0
+          npm ci
+          npm test
+
+      - name: Test fake-salesforce
+        run: |
+          cd apps/fake-salesforce || exit 0
+          npm ci
+          npm test
+
       - name: Build dashboard
         env:
           NEXT_TELEMETRY_DISABLED: 1

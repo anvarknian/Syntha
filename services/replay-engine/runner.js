@@ -117,6 +117,133 @@ async function replayEvent(event, cfg) {
     return { action: `POST ${endpoint}`, status: result.status }
   }
 
+  if (event.metadata && event.metadata.service === 'fake-slack') {
+    const payload = event.payload || {}
+
+    if (event.kind === 'slack_channel_created') {
+      const endpoint = `${cfg.fakeSlackURL.replace(/\/$/, '')}/channels`
+      assertURLAllowed(endpoint, cfg.allowedOrigins)
+      const body = {
+        name: payload.name,
+        members: Array.isArray(payload.members) ? payload.members : [],
+      }
+      const result = await postJson(endpoint, body)
+      const expectedStatus = expectedStatusForEvent(event, 201)
+      if (result.status !== expectedStatus) {
+        throw new Error(`status mismatch: expected ${expectedStatus}, got ${result.status}`)
+      }
+      return { action: `POST ${endpoint}`, status: result.status }
+    }
+
+    if (event.kind === 'slack_message_posted' || event.kind === 'slack_prompt_injection') {
+      const endpoint = `${cfg.fakeSlackURL.replace(/\/$/, '')}/send`
+      assertURLAllowed(endpoint, cfg.allowedOrigins)
+      const body = {
+        channel: payload.channel_id,
+        text: payload.text,
+        user: payload.user,
+        thread_ts: payload.thread_ts || null,
+        adversarial: payload.adversarial === true,
+      }
+      const result = await postJson(endpoint, body)
+      const expectedStatus = expectedStatusForEvent(event, 201)
+      if (result.status !== expectedStatus) {
+        throw new Error(`status mismatch: expected ${expectedStatus}, got ${result.status}`)
+      }
+      return { action: `POST ${endpoint}`, status: result.status }
+    }
+
+    // Events like slack_rate_limited/slack_auth_failed represent failure outcomes and
+    // are not replayed as outbound mutations.
+    return { action: `NOOP ${event.kind}`, status: 0 }
+  }
+
+  if (event.metadata && event.metadata.service === 'fake-jira') {
+    const payload = event.payload || {}
+
+    if (event.kind === 'jira_issue_created') {
+      const endpoint = `${cfg.fakeJiraURL.replace(/\/$/, '')}/issues`
+      assertURLAllowed(endpoint, cfg.allowedOrigins)
+      const body = {
+        project_key: payload.project_key,
+        summary: payload.summary,
+        description: payload.description,
+        reporter: payload.reporter,
+        priority: payload.priority,
+      }
+      const result = await postJson(endpoint, body)
+      const expectedStatus = expectedStatusForEvent(event, 201)
+      if (result.status !== expectedStatus) {
+        throw new Error(`status mismatch: expected ${expectedStatus}, got ${result.status}`)
+      }
+      return { action: `POST ${endpoint}`, status: result.status }
+    }
+
+    if (event.kind === 'jira_issue_transitioned') {
+      const issueID = payload.id
+      if (!issueID) {
+        throw new Error('missing issue id for jira transition replay')
+      }
+      const endpoint = `${cfg.fakeJiraURL.replace(/\/$/, '')}/issues/${issueID}/transition`
+      assertURLAllowed(endpoint, cfg.allowedOrigins)
+      const body = {
+        status: payload.status,
+        assignee: payload.assignee,
+      }
+      const result = await postJson(endpoint, body)
+      const expectedStatus = expectedStatusForEvent(event, 200)
+      if (result.status !== expectedStatus) {
+        throw new Error(`status mismatch: expected ${expectedStatus}, got ${result.status}`)
+      }
+      return { action: `POST ${endpoint}`, status: result.status }
+    }
+
+    return { action: `NOOP ${event.kind}`, status: 0 }
+  }
+
+  if (event.metadata && event.metadata.service === 'fake-salesforce') {
+    const payload = event.payload || {}
+
+    if (event.kind === 'salesforce_case_created') {
+      const endpoint = `${cfg.fakeSalesforceURL.replace(/\/$/, '')}/cases`
+      assertURLAllowed(endpoint, cfg.allowedOrigins)
+      const body = {
+        account_id: payload.account_id,
+        subject: payload.subject,
+        description: payload.description,
+        contact_email: payload.contact_email,
+        severity: payload.severity,
+      }
+      const result = await postJson(endpoint, body)
+      const expectedStatus = expectedStatusForEvent(event, 201)
+      if (result.status !== expectedStatus) {
+        throw new Error(`status mismatch: expected ${expectedStatus}, got ${result.status}`)
+      }
+      return { action: `POST ${endpoint}`, status: result.status }
+    }
+
+    if (event.kind === 'salesforce_case_assigned') {
+      const caseID = payload.id
+      if (!caseID) {
+        throw new Error('missing case id for salesforce assignment replay')
+      }
+      const endpoint = `${cfg.fakeSalesforceURL.replace(/\/$/, '')}/cases/${caseID}/assign`
+      assertURLAllowed(endpoint, cfg.allowedOrigins)
+      const body = {
+        owner: payload.owner,
+        status: payload.status,
+      }
+      const result = await postJson(endpoint, body)
+      const expectedStatus = expectedStatusForEvent(event, 200)
+      if (result.status !== expectedStatus) {
+        throw new Error(`status mismatch: expected ${expectedStatus}, got ${result.status}`)
+      }
+      return { action: `POST ${endpoint}`, status: result.status }
+    }
+
+    return { action: `NOOP ${event.kind}`, status: 0 }
+  }
+
   return { action: 'NOOP', status: 0 }
 }
 
@@ -129,7 +256,10 @@ async function run() {
 
   const allowedOrigins = parseAllowedOrigins(process.env.REPLAY_ALLOWED_ORIGINS)
   const fakeGmailURL = process.env.FAKE_GMAIL_URL || 'http://localhost:3001'
-  const cfg = { fakeGmailURL, allowedOrigins }
+  const fakeSlackURL = process.env.FAKE_SLACK_URL || 'http://localhost:3002'
+  const fakeJiraURL = process.env.FAKE_JIRA_URL || 'http://localhost:3003'
+  const fakeSalesforceURL = process.env.FAKE_SALESFORCE_URL || 'http://localhost:3004'
+  const cfg = { fakeGmailURL, fakeSlackURL, fakeJiraURL, fakeSalesforceURL, allowedOrigins }
   let failed = 0
   let replayed = 0
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { Rocket, ShieldAlert } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 const defaultScenario = `world:
@@ -20,6 +21,8 @@ type ScenarioResult = {
   scenario_id?: string;
   seed?: number;
   created_at?: string;
+  replay_file?: string;
+  replay_sequence?: number;
   error?: {
     code: string;
     message: string;
@@ -27,6 +30,7 @@ type ScenarioResult = {
 };
 
 export function ScenarioComposer() {
+  const router = useRouter();
   const [scenario, setScenario] = useState(defaultScenario);
   const [result, setResult] = useState<ScenarioResult | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -42,6 +46,10 @@ export function ScenarioComposer() {
         });
         const payload = (await response.json()) as ScenarioResult;
         setResult(payload);
+        if (response.ok && payload.replay_file) {
+          router.replace(`/?view=timeline&replay=${encodeURIComponent(payload.replay_file)}`);
+          router.refresh();
+        }
       } catch (error) {
         setResult({
           error: {
@@ -67,7 +75,7 @@ export function ScenarioComposer() {
       <textarea value={scenario} onChange={(event) => setScenario(event.target.value)} spellCheck={false} />
       <div className="result-strip">
         {result?.scenario_id ? (
-          <span>created {result.scenario_id}</span>
+          <span>created {result.scenario_id}{result.replay_sequence ? ` at replay #${result.replay_sequence}` : ""}</span>
         ) : result?.error ? (
           <span className="danger"><ShieldAlert size={15} /> {result.error.code}</span>
         ) : (

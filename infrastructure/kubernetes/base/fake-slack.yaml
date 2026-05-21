@@ -16,6 +16,13 @@ spec:
         app.kubernetes.io/name: fake-slack
         app.kubernetes.io/component: fake-saas
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: fake-slack
           image: syntha/fake-slack:latest
@@ -30,6 +37,19 @@ spec:
               value: text
             - name: FAKE_SLACK_RATE_LIMIT_PER_MINUTE
               value: "240"
+            - name: HOME
+              value: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
           ports:
             - name: http
               containerPort: 3002
@@ -52,6 +72,11 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

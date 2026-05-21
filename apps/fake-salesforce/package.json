@@ -1,0 +1,16 @@
+{
+  "name": "fake-salesforce",
+  "version": "0.1.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "@opentelemetry/auto-instrumentations-node": "^0.76.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.218.0",
+    "@opentelemetry/sdk-node": "^0.218.0",
+    "body-parser": "^1.20.2",
+    "express": "^4.18.2"
+  }
+}

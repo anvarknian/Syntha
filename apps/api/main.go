@@ -27,6 +27,7 @@ const (
 )
 
 var publisher eventbus.Publisher
+var liveReplayRecorder *localReplayRecorder
 
 func scenarioHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -93,11 +94,23 @@ func scenarioHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, map[string]interface{}{
+	response := map[string]interface{}{
 		"scenario_id": scenarioID,
 		"seed":        seed,
 		"created_at":  now.Format(time.RFC3339Nano),
-	})
+	}
+	if liveReplayRecorder != nil {
+		appendResult, err := liveReplayRecorder.appendScenarioCreated(r.Context(), scenarioID, seed, now, payload)
+		if err != nil {
+			log.Printf("live replay append failed: %v", err)
+			writeError(w, http.StatusServiceUnavailable, "replay_append_failed", "failed to append dashboard replay event")
+			return
+		}
+		response["replay_file"] = appendResult.FileName
+		response["replay_sequence"] = appendResult.Sequence
+	}
+
+	writeJSON(w, http.StatusCreated, response)
 }
 
 // detectPromptInjection scans decoded YAML payload for suspicious strings.
@@ -177,6 +190,7 @@ func main() {
 	} else {
 		publisher = eventbus.NewLocalAdapter(eventsDir)
 	}
+	liveReplayRecorder = newLocalReplayRecorder(dataDir)
 
 	eventbus.SetMetricsHooks(func(adapter string) {
 		metrics.IncPublishRetries(adapter)
@@ -184,8 +198,23 @@ func main() {
 		metrics.IncEventPublished()
 	})
 
+	storageSvc := newStorageService(dataDir)
+	replaySvc := newReplayHTTPService(dataDir)
+	diffSvc := newReplayDiffService(dataDir)
+
 	mux := http.NewServeMux()
 	mux.Handle("/scenario", otelhttp.NewHandler(http.HandlerFunc(scenarioHandler), "ScenarioHTTP"))
+	mux.Handle("/v1/replays", otelhttp.NewHandler(http.HandlerFunc(replaySvc.handleList), "ReplayListHTTP"))
+	mux.Handle("/v1/integrity", otelhttp.NewHandler(http.HandlerFunc(replaySvc.handleIntegrity), "ReplayIntegrityHTTP"))
+	mux.Handle("/v1/storage", otelhttp.NewHandler(http.HandlerFunc(storageSvc.handleOverview), "StorageOverviewHTTP"))
+	mux.Handle("/v1/storage/health", otelhttp.NewHandler(http.HandlerFunc(storageSvc.handleHealth), "StorageHealthHTTP"))
+	mux.Handle("/v1/storage/events", otelhttp.NewHandler(http.HandlerFunc(storageSvc.handleEvents), "StorageEventsHTTP"))
+	mux.Handle("/v1/storage/artifacts", otelhttp.NewHandler(http.HandlerFunc(storageSvc.handleArtifacts), "StorageArtifactsHTTP"))
+	mux.Handle("/v1/storage/retention", otelhttp.NewHandler(http.HandlerFunc(storageSvc.handleRetention), "StorageRetentionHTTP"))
+	mux.Handle("/v1/diffs", otelhttp.NewHandler(http.HandlerFunc(diffSvc.handleDiff), "ReplayDiffHTTP"))
+	mux.Handle("/v1/diffs/branch", otelhttp.NewHandler(http.HandlerFunc(diffSvc.handleMode("branch")), "ReplayBranchDiffHTTP"))
+	mux.Handle("/v1/diffs/trace", otelhttp.NewHandler(http.HandlerFunc(diffSvc.handleMode("trace")), "ReplayTraceDiffHTTP"))
+	mux.Handle("/v1/diffs/execution", otelhttp.NewHandler(http.HandlerFunc(diffSvc.handleMode("execution")), "ReplayExecutionDiffHTTP"))
 
 	server := &http.Server{
 		Addr:    ":8080",

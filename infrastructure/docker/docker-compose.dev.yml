@@ -24,7 +24,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
     depends_on:
       - otel-collector
-    command: ["sh","-c","npm ci --no-audit --no-fund && npm run start"]
+    command: ["sh","-c","npm ci --no-audit --no-fund && npx playwright install chromium && npm run start"]
 
   fake-gmail:
     image: node:18
@@ -60,6 +60,40 @@ services:
       - otel-collector
     command: ["sh","-c","npm ci --no-audit --no-fund && npm start"]
 
+  fake-jira:
+    image: node:18
+    working_dir: /app
+    volumes:
+      - ../../apps/fake-jira:/app
+      - ../../services:/services
+      - ../../data:/data
+    ports:
+      - "3003:3003"
+    environment:
+      - SYNTHA_DATA_DIR=/data
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
+      - EXPORT_DENY_FIELDS=description
+    depends_on:
+      - otel-collector
+    command: ["sh","-c","npm ci --no-audit --no-fund && npm start"]
+
+  fake-salesforce:
+    image: node:18
+    working_dir: /app
+    volumes:
+      - ../../apps/fake-salesforce:/app
+      - ../../services:/services
+      - ../../data:/data
+    ports:
+      - "3004:3004"
+    environment:
+      - SYNTHA_DATA_DIR=/data
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
+      - EXPORT_DENY_FIELDS=description
+    depends_on:
+      - otel-collector
+    command: ["sh","-c","npm ci --no-audit --no-fund && npm start"]
+
   dashboard:
     image: node:18
     working_dir: /app
@@ -86,7 +120,20 @@ services:
 
   redpanda:
     image: redpandadata/redpanda:latest
-    command: ["redpanda", "start", "--overprovisioned", "--memory", "1G", "--smp", "1", "--reserve-memory", "0M"]
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --memory
+      - 1G
+      - --smp
+      - "1"
+      - --reserve-memory
+      - 0M
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:9092
     ports:
       - "9092:9092"
 
@@ -101,7 +148,13 @@ services:
     environment:
       - REDPANDA_BROKERS=redpanda:9092
       - SYNTHA_DATA_DIR=/data
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - FAKE_GMAIL_URL=http://fake-gmail:3001
       - FAKE_SLACK_URL=http://fake-slack:3002
+      - FAKE_JIRA_URL=http://fake-jira:3003
+      - FAKE_SALESFORCE_URL=http://fake-salesforce:3004
+    depends_on:
+      - redpanda
+      - otel-collector
     command: ["sh","-c","go run ."]
+
