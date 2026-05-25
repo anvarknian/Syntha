@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/stretchr/testify v1.11.1
-	go.temporal.io/sdk v1.43.1
+	go.temporal.io/sdk v1.44.0
 )
 
 require (
