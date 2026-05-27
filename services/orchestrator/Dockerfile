@@ -1,4 +1,4 @@
-FROM golang:1.26-alpine AS build
+FROM golang:1.26.3-alpine AS build
 
 WORKDIR /src/services/orchestrator
 COPY services/orchestrator/go.mod services/orchestrator/go.sum* ./
