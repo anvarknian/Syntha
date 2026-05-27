@@ -1,4 +1,4 @@
-FROM node:20-bookworm-slim
+FROM node:26-bookworm-slim
 
 WORKDIR /app
 COPY apps/fake-gmail/package*.json ./
